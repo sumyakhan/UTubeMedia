@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YouTube Official Style</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* UI Style */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #ffffff; color: #0f0f0f; font-family: "Roboto", Arial, sans-serif; padding-bottom: 60px; }
+        
+        nav { 
+            background: #ffffff; height: 50px; display: flex; 
+            align-items: center; justify-content: space-between;
+            padding: 0 16px; position: sticky; top: 0; z-index: 1000;
+        }
+        .logo-box { display: flex; align-items: center; text-decoration: none; color: #0f0f0f; }
+        .logo-box i { color: #ff0000; font-size: 26px; margin-right: 4px; }
+        .logo-box span { font-size: 19px; font-weight: bold; letter-spacing: -1px; }
+
+        .category-wrapper {
+            display: flex; overflow-x: auto; padding: 10px 16px; gap: 10px;
+            background: #fff; border-bottom: 1px solid #eee; scrollbar-width: none;
+        }
+        .chip {
+            background: #f2f2f2; padding: 6px 12px; border-radius: 8px;
+            font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer;
+        }
+        .chip.active { background: #0f0f0f; color: #fff; }
+
+        .video-grid { display: grid; grid-template-columns: 1fr; width: 100%; }
+        .video-card { text-decoration: none; color: inherit; display: block; margin-bottom: 15px; cursor: pointer; }
+        
+        .thumb-box { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; padding: 2px 4px; font-size: 11px; border-radius: 4px; }
+
+        .info { display: flex; padding: 12px; gap: 12px; }
+        .channel-avatar { width: 36px; height: 36px; border-radius: 50%; background: #eee; overflow: hidden; flex-shrink: 0; }
+        .channel-avatar img { width: 100%; height: 100%; }
+        .details h3 { font-size: 14px; font-weight: 500; line-height: 1.4; color: #0f0f0f; }
+        .meta { font-size: 12px; color: #606060; margin-top: 4px; }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; height: 50px;
+            background: #ffffff; border-top: 1px solid #e5e5e5;
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+        }
+        .nav-item { text-align: center; color: #0f0f0f; text-decoration: none; font-size: 10px; flex: 1; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="logo-box"><i class="fab fa-youtube"></i><span>YouTube</span></a>
+    <div style="display: flex; gap: 20px; font-size: 18px;">
+        <i class="fas fa-search"></i>
+        <i class="far fa-bell"></i>
+    </div>
+</nav>
+
+<div class="category-wrapper">
+    <div class="chip active">All</div>
+    <div class="chip">Gaming</div>
+    <div class="chip">Live</div>
+    <div class="chip">Music</div>
+</div>
+
+<div class="video-grid" id="videoGrid">
+    </div>
+
+<div class="bottom-nav">
+    <a href="#" class="nav-item"><i class="fas fa-home"></i>Home</a>
+    <a href="#" class="nav-item"><i class="fab fa-youtube-square"></i>Shorts</a>
+    <a href="#" class="nav-item"><i class="fas fa-play-circle"></i>Subs</a>
+    <a href="#" class="nav-item"><i class="fas fa-user-circle"></i>You</a>
+</div>
+
+<script>
+    // ১. আপনার কনফিগুরেশন
+    const mySmartLink = "https://www.google.com"; // এখানে আপনার স্মার্ট লিঙ্ক দিন
+    const LIMIT_DURATION = 10000; // ১০ সেকেন্ড লিমিট (মিলি-সেকেন্ডে)
+
+    // ২. ইউটিউব ভিডিও লিস্ট
+    const youtubeLinks = [
+        "https://www.youtube.com/watch?v=Sc66eR9GkKk",
+        "https://youtu.be/K4TOrB7at0Y",
+        "https://www.youtube.com/watch?v=7uS4869pYNo"
+    ];
+
+    // ভিডিও লোড করার ফাংশন
+    async function loadVideos() {
+        const grid = document.getElementById('videoGrid');
+        for (const url of youtubeLinks) {
+            let vid = "";
+            if (url.includes("v=")) vid = url.split('v=')[1].split('&')[0];
+            else if (url.includes("youtu.be/")) vid = url.split('youtu.be/')[1].split('?')[0];
+
+            if (vid) {
+                try {
+                    const res = await fetch(`https://noembed.com/embed?url=${url}`);
+                    const data = await res.json();
+                    const author = data.author_name || "Official Channel";
+                    
+                    const html = `
+                        <div class="video-card" onclick="smartOpen('${url}', '${vid}')">
+                            <div class="thumb-box">
+                                <img src="https://img.youtube.com/vi/${vid}/mqdefault.jpg">
+                                <span class="duration">10:24</span>
+                            </div>
+                            <div class="info">
+                                <div class="channel-avatar"><img src="https://ui-avatars.com/api/?name=${author}"></div>
+                                <div class="details">
+                                    <h3>${data.title}</h3>
+                                    <p class="meta">${author} • ${Math.floor(Math.random()*100)}K views</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.innerHTML += html;
+                } catch (e) { console.log("Error loading video"); }
+            }
+        }
+    }
+
+    // স্মার্ট লিঙ্ক এবং লিমিট সিস্টেম ফাংশন
+    function smartOpen(originalLink, videoId) {
+        const storageKey = 'limit_time_' + videoId;
+        const lastClick = localStorage.getItem(storageKey);
+        const now = new Date().getTime();
+
+        // যদি ১০ সেকেন্ড পার না হয়
+        if (lastClick && (now - lastClick < LIMIT_DURATION)) {
+            // সরাসরি একই ট্যাবে ইউটিউবে নিয়ে যাবে
+            window.location.href = originalLink;
+        } else {
+            // লিমিট নেই, তাই স্মার্ট লিঙ্ক নতুন ট্যাবে খুলবে
+            localStorage.setItem(storageKey, now);
+
+            // নতুন ট্যাবে স্মার্ট লিঙ্ক খোলার চেষ্টা
+            const win = window.open(mySmartLink, '_blank');
+            
+            // যদি পপ-আপ ব্লকার থাকে তবে বিকল্প পদ্ধতি
+            if (!win || win.closed || typeof win.closed == 'undefined') {
+                let a = document.createElement('a');
+                a.href = mySmartLink;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.click();
+            }
+
+            // মূল উইন্ডো ১ সেকেন্ড পর ইউটিউবে চলে যাবে
+            setTimeout(() => {
+                window.location.href = originalLink;
+            }, 1000);
+        }
+    }
+
+    loadVideos();
+</script>
+
+</body>
+</html>
